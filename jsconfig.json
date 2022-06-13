@@ -1,0 +1,20 @@
+{
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "commonjs",
+		"baseUrl": "./",
+		"paths": {
+			//用vite配置 alias 你有feelstyle吗?
+			"@/*": ["src/*"],
+		},
+		"sourceMap": false,
+		"strict": true,
+		"jsx": "preserve",
+		"types": ["vite/client"]
+	},
+	"vueCompilerOptions": {
+		"experimentalCompatMode": 2,
+	},
+	"include": ["src/**/*.vue", "src/**/*.js"],
+	"exclude": ["node_modules", "dist"]
+}

@@ -2,18 +2,18 @@ lockfileVersion: 5.4
 
 specifiers:
   '@vitejs/plugin-vue': ^2.3.3
+  d3-geo: ^3.0.1
   three: ^0.141.0
   three-css2drender: ^1.0.0
   three-obj-mtl-loader: ^1.0.3
-  three-orbit-controls: ^82.1.0
   vite: ^2.9.9
   vue: ^3.2.25
 
 dependencies:
+  d3-geo: registry.npmmirror.com/d3-geo/3.0.1
   three: registry.npmmirror.com/three/0.141.0
   three-css2drender: registry.npmmirror.com/three-css2drender/1.0.0_three@0.141.0
   three-obj-mtl-loader: registry.npmmirror.com/three-obj-mtl-loader/1.0.3_three@0.141.0
-  three-orbit-controls: registry.npmmirror.com/three-orbit-controls/82.1.0
   vue: registry.npmmirror.com/vue/3.2.36
 
 devDependencies:
@@ -158,6 +158,24 @@ packages:
     resolution: {integrity: sha512-/WwNkdXfckNgw6S5R125rrW8ez139lBHWouiBvX8dfMFtcn6V81REDqnH7+CRpRipfYlyU1CmOnOxrmGcFOjeA==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/csstype/-/csstype-2.6.20.tgz}
     name: csstype
     version: 2.6.20
+
+  registry.npmmirror.com/d3-array/3.1.6:
+    resolution: {integrity: sha512-DCbBBNuKOeiR9h04ySRBMW52TFVc91O9wJziuyXw6Ztmy8D3oZbmCkOO3UHKC7ceNJsN2Mavo9+vwV8EAEUXzA==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/d3-array/-/d3-array-3.1.6.tgz}
+    name: d3-array
+    version: 3.1.6
+    engines: {node: '>=12'}
+    dependencies:
+      internmap: registry.npmmirror.com/internmap/2.0.3
+    dev: false
+
+  registry.npmmirror.com/d3-geo/3.0.1:
+    resolution: {integrity: sha512-Wt23xBych5tSy9IYAM1FR2rWIBFWa52B/oF/GYe5zbdHrg08FU8+BuI6X4PvTwPDdqdAdq04fuWJpELtsaEjeA==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/d3-geo/-/d3-geo-3.0.1.tgz}
+    name: d3-geo
+    version: 3.0.1
+    engines: {node: '>=12'}
+    dependencies:
+      d3-array: registry.npmmirror.com/d3-array/3.1.6
+    dev: false
 
   registry.npmmirror.com/esbuild-android-64/0.14.42:
     resolution: {integrity: sha512-P4Y36VUtRhK/zivqGVMqhptSrFILAGlYp0Z8r9UQqHJ3iWztRCNWnlBzD9HRx0DbueXikzOiwyOri+ojAFfW6A==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/esbuild-android-64/-/esbuild-android-64-0.14.42.tgz}
@@ -439,6 +457,13 @@ packages:
       function-bind: registry.npmmirror.com/function-bind/1.1.1
     dev: true
 
+  registry.npmmirror.com/internmap/2.0.3:
+    resolution: {integrity: sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/internmap/-/internmap-2.0.3.tgz}
+    name: internmap
+    version: 2.0.3
+    engines: {node: '>=12'}
+    dev: false
+
   registry.npmmirror.com/is-core-module/2.9.0:
     resolution: {integrity: sha512-+5FPy5PnwmO3lvfMb0AsoPaBG+5KHUI0wYFXOtYPnVVVspTFUuMZNfNaNVRt3FZadstu2c8x23vykRW/NBoU6A==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/is-core-module/-/is-core-module-2.9.0.tgz}
     name: is-core-module
@@ -547,12 +572,6 @@ packages:
       three: '>= 0.91'
     dependencies:
       three: registry.npmmirror.com/three/0.141.0
-    dev: false
-
-  registry.npmmirror.com/three-orbit-controls/82.1.0:
-    resolution: {integrity: sha512-hIWxGoHqIbeq0S2lA14m9VRzo7SamKKVJ9mKMT/rdh0Qa3nV5Umvhlx4zsHl0Y6jLKVZhjatJfeD/K08Tr/g4A==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/three-orbit-controls/-/three-orbit-controls-82.1.0.tgz}
-    name: three-orbit-controls
-    version: 82.1.0
     dev: false
 
   registry.npmmirror.com/three/0.141.0:

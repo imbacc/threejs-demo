@@ -8,10 +8,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "d3-geo": "^3.0.1",
     "three": "^0.141.0",
     "three-css2drender": "^1.0.0",
     "three-obj-mtl-loader": "^1.0.3",
-    "three-orbit-controls": "^82.1.0",
     "vue": "^3.2.25"
   },
   "devDependencies": {

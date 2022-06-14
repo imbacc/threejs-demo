@@ -59,10 +59,10 @@ export default class threejsMap extends threejsWebGL {
 
     // 网格上的物体进行动画
     animationMeshBox() {
-        this.animation = requestAnimationFrame(this.animationMeshBox.bind(this))
-        this.mesh.rotation.x += 0.01
-        this.mesh.rotation.y += 0.01
+        this.mesh.rotateX(0.01)
+        this.mesh.rotateY(0.01)
         this.webGL.render(this.scene, this.camera)
+        this.animation = requestAnimationFrame(this.animationMeshBox.bind(this))
     }
 
     // 获取模型对象

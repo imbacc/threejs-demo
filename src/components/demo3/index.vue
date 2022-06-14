@@ -1,5 +1,4 @@
 <script setup>
-    import threejsWebGL from './threejsWebGL.js'
     import threejsMap from './threejsMap.js'
     import threejsBox from './threejsBox.js'
     import threejsLightBar from './threejsLightBar.js'
@@ -39,24 +38,23 @@
         { source: { name: '青海省' }, target: { name: '四川省' } }
     ]
 
-    const webg = new threejsWebGL()
-    const map = new threejsMap(webg.scene, webg.camera, webg.webGL, webg.webGLDOM)
-    const box = new threejsBox(webg.scene, webg.camera, webg.webGL, webg.webGLDOM)
-    const light = new threejsLightBar(webg.scene)
+    const map = new threejsMap()
+    // const box = new threejsBox()
+    // const light = new threejsLightBar()
 
     onMounted(() => {
         fetch('/china.json')
             .then((res) => res.json())
             .then((res) => {
                 map.initMap(res)
-                light.setVector3Json(map.vector3Json)
-                light.drawLightBar(lightBarData)
-                light.drawFlyLine(flyDatas)
+                // light.setVector3Json(map.vector3Json)
+                // light.drawLightBar(lightBarData)
+                // light.drawFlyLine(flyDatas)
             })
     })
 
     onUnmounted(() => {
-        webg.destroyed()
+        // webg.destroyed()
     })
 </script>
 

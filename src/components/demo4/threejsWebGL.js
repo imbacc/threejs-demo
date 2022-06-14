@@ -33,7 +33,7 @@ export default class threejsWebGL {
 
     // 初始化相机
     initCamera() {
-        this.camera = new THREE.PerspectiveCamera(8, window.innerWidth / window.innerHeight, 1, 1000)
+        this.camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 1, 1000)
         this.camera.position.set(100, 300, 300)
         this.camera.lookAt(0, 0, 0)
     }

@@ -8,11 +8,12 @@ export default class threejsWebGL {
         this.camera = null
         this.scene = null
         this.controls = null
+        this.animation = {}
         this.initWebGL()
         this.initScene()
         this.initCamera()
         this.initControl()
-        this.initAroundLight()
+        this.initLight()
         this.initHelper()
         this.initRender()
     }
@@ -27,7 +28,7 @@ export default class threejsWebGL {
         this.webGL = new THREE.WebGLRenderer({ antialias: true })
         // 设置大小
         this.webGL.setSize(window.innerWidth, window.innerHeight)
-        this.webGL.setClearColor(0xb9d3ff, 1)
+        this.webGL.setClearColor(0xffffff, 0)
         this.webGLDOM = this.webGL.domElement
         document.querySelector('#app').appendChild(this.webGLDOM)
         window.addEventListener('resize', this.onWindowResize.bind(this), false)
@@ -35,7 +36,7 @@ export default class threejsWebGL {
 
     // 初始化相机
     initCamera() {
-        this.camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 1, 1000)
+        this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000)
         this.camera.position.set(100, 300, 300)
         this.camera.lookAt(0, 0, 0)
     }
@@ -56,13 +57,23 @@ export default class threejsWebGL {
         this.controls.enableDamping = true
         this.controls.dampingFactor = 0.25
         this.controls.rotateSpeed = 0.35
-        this.controls.update()
+        // 控制器动画
+        this.animationPlay('controlsAnimation', () => {
+            if (this.controls) this.controls.update()
+        })
+
+        // this.controls.enablePan = false // 禁止右键拖拽
+        // this.controls.enableZoom = true // false-禁止右键缩放
+        // this.controls.maxDistance = 200 // 最大缩放 适用于 PerspectiveCamera
+        // this.controls.minDistance = 50 // 最大缩放
+        // this.controls.enableRotate = true // false-禁止旋转
+        // this.controls.minZoom = 0.5 // 最小缩放 适用于OrthographicCamera
+        // this.controls.maxZoom = 2 // 最大缩放
     }
 
     // 初始化光源
-    initAroundLight() {
-        var ambient = new THREE.AmbientLight()
-        // var ambient = new THREE.AmbientLight(0xffffff)
+    initLight() {
+        const ambient = new THREE.AmbientLight()
         this.scene.add(ambient)
     }
 
@@ -70,8 +81,8 @@ export default class threejsWebGL {
     initHelper() {
         const axisHelper = new THREE.AxesHelper(300)
         this.scene.add(axisHelper)
-        // const gridHelper = new THREE.GridHelper(600, 60)
-        // this.scene.add(gridHelper)
+        const gridHelper = new THREE.GridHelper(600, 60)
+        this.scene.add(gridHelper)
     }
 
     // 根据浏览器窗口变化动态更新尺寸
@@ -79,13 +90,24 @@ export default class threejsWebGL {
         this.camera.aspect = window.innerWidth / window.innerHeight
         this.camera.updateProjectionMatrix()
         this.webGL.setSize(window.innerWidth, window.innerHeight)
+        this.initRender()
+    }
+
+    // 模型对象进行动画
+    animationPlay(name, fun) {
+        if (!name || !fun || typeof fun !== 'function') return
+        fun()
+        this.initRender()
+        this.animation[name] = requestAnimationFrame(this.animationPlay.bind(this, name, fun))
     }
 
     // 销毁webgl
     destroyed() {
+        Object.keys(this.animation).forEach((key) => cancelAnimationFrame(this.animation[key]))
         this.controls.dispose()
         this.camera.remove()
         this.scene.remove()
+        this.webGL.clear()
         this.webGL.dispose()
         this.camera = null
         this.scene = null

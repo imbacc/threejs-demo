@@ -3,7 +3,7 @@
     const compList = import.meta.glob('./components/**/*.vue')
     console.log('%c [ compList ]-7', 'font-size:14px; background:#41b883; color:#ffffff;', compList)
 
-    const first = 'demo4'
+    const first = 'demo5'
     const demoResolve = shallowRef({})
     const comp = shallowRef(null)
 
@@ -25,7 +25,7 @@
     }
 
     const forDemo = (keys) => {
-        for (let i = 1, j = keys.length; i <= j; i++) {
+        for (let i = 1, j = keys.length - 1; i <= j; i++) {
             const a = document.createElement('a')
             a.setAttribute('href', 'javascript:;')
             a.style.marginRight = '30px'

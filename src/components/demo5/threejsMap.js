@@ -66,7 +66,8 @@ export default class threejsMap extends threejsWebGL {
         })
 
         mapData.features.forEach((elem) => {
-            this.mapShowName(elem.name, elem.center[0], elem.center[1])
+            const [eX, eY] = elem.properties.center || [0, 0]
+            this.mapShowName(elem.properties.name || '', eX ? eX : 0, eY ? eY : 0)
             // 定一个省份3D对象
             const province = new THREE.Object3D()
             // 循环坐标数组
@@ -204,9 +205,11 @@ export default class threejsMap extends threejsWebGL {
         })
         //创建坐标点，并将材质给坐标
         let geometry = new THREE.BufferGeometry()
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute([x, y, 0], 1))
+        geometry.setFromPoints([new THREE.Vector2(x, y, 4.01)])
         let sprite = new THREE.Points(geometry, spriteMaterial)
         sprite.position.set(x, -y + 2, 6)
+        sprite.translateX(-190)
+        sprite.translateY(30)
         this.scene.add(sprite)
         canvas.remove()
     }

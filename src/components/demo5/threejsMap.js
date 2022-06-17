@@ -12,8 +12,10 @@ export default class threejsMap extends threejsWebGL {
         this.webGL = this.getValue('webGL')
         this.webGLDOM = this.getValue('webGLDOM')
         // data
-        this.group = null
+        this.mapPackage = null
         this.raycaster = null
+        this.lastPick = null
+        this.tooltip = null
         this.mouse = null
         this.mapData = []
         this.init()
@@ -26,10 +28,10 @@ export default class threejsMap extends threejsWebGL {
         // // set scene
         this.scene.background = new THREE.Color(0xf0f0f0)
         // // set controls
-        this.controls.enableZoom = true
-        this.controls.autoRotate = false
-        this.controls.autoRotateSpeed = 2
-        this.controls.enablePan = true
+        // this.controls.enableZoom = true
+        // this.controls.autoRotate = false
+        // this.controls.autoRotateSpeed = 2
+        // this.controls.enablePan = true
         // Object 3D
         // this.mapObject = new THREE.Object3D()
         // set light
@@ -45,146 +47,142 @@ export default class threejsMap extends threejsWebGL {
         this.mapData = mapData
         // d3-geo转化坐标
         const projection = d3geo.geoMercator().center([104.0, 37.5]).scale(80).translate([0, 0])
-        // 遍历省份构建模型
-        const vector3Json = []
-        this.mapData.features.forEach((element) => {
-            const areas = element.geometry.coordinates[0]
-            //es6解构 ...data
-            //var a = { name: '张三', age: 25 }  var b = {job: 'web前端',...a}
-            // 相当于 var c = {job: 'web前端',name: '张三',age: 25}
-            const areaData = { ...element.properties, coordinates: [] }
-            areas.forEach((area, i) => {
-                if (area[0] instanceof Array) {
-                    areaData.coordinates[i] = []
-                    area.forEach((areaInner) => {
-                        const [y, x] = projection([...areaInner])
-                        areaData.coordinates[i].push([y, x, 0])
-                    })
-                } else {
-                    const [y, x] = projection([...area])
-                    areaData.coordinates.push([y, x, 0])
-                }
-            })
-            // if (element.properties.name) vector3Json[element.properties.name] = areaData
-            vector3Json.push(areaData)
-        })
-        //console.log('vector3json', this.vector3Json)
-        //绘制模块
-        const group = new THREE.Group()
-        const lineGroup = new THREE.Line()
-        vector3Json.forEach((provinces) => {
-            const [x, y] = provinces.center || provinces.cp || [0, 0]
-            this.mapShowName(provinces.name, x, y)
-            //var a=[[1,2,3],[4,5,6]]
-            //访问：a[0][0]=1,a[1][2]=6 （起始值0）
-            if (provinces.coordinates[0][0] instanceof Array) {
-                provinces.coordinates.forEach((area) => {
-                    const mesh = this.getAreaMesh(area)
-                    group.add(mesh)
-                    const line = this.drawLine(area)
-                    lineGroup.add(line)
-                })
-            } else {
-                //单面
-                //console.log(provinces.coordinates)
-                const mesh = this.getAreaMesh(provinces.coordinates)
-                group.add(mesh)
-                const line = this.drawLine(provinces.coordinates)
-                lineGroup.add(line)
-            }
+        // 初始化一个地图对象
+        const mapPackage = new THREE.Object3D()
+        const lineMaterial = new THREE.LineBasicMaterial({
+            color: 'white'
         })
 
-        group.rotateX(360)
-        lineGroup.rotateX(360)
-        // group.rotation.y = Math.PI
-        // lineGroup.rotation.y = Math.PI
-        this.group = group
-        this.scene.add(group)
-        this.scene.add(lineGroup)
-        this.camera.position.set(30, 80, 100)
-        document.body.addEventListener('mousemove', this.mouseEvent.bind(this))
-    }
-
-    getAreaMesh(points) {
-        //console.log('---' + points);
-        const shape = new THREE.Shape() //实例一个形状
-
-        //const [x0, y0] = points[0];
-        points.forEach((p, i) => {
-            //console.log(p);
-            const [x, y] = p
-            if (i === 0) {
-                shape.moveTo(x, y)
-            } else if (i === points.length - 1) {
-                shape.quadraticCurveTo(x, y, x, y) //二次曲线
-            } else {
-                shape.lineTo(x, y, x, y)
-            }
-        })
-        //几何体
-        const geometry = new THREE.ExtrudeGeometry(
-            shape,
-            { depth: 2, bevelEnabled: false } //启用斜角
-        )
-        //材质
         const material = new THREE.MeshBasicMaterial({
-            side: THREE.DoubleSide,
-            color: '#007cff',
+            color: '#2defff',
+            transparent: true,
+            opacity: 0.6
+        })
+
+        const material1 = new THREE.MeshBasicMaterial({
+            color: '#3480C4',
             transparent: true,
             opacity: 0.5
         })
 
-        //合并成一个网格模型
-        const mesh = new THREE.Mesh(geometry, material)
-        return mesh
+        mapData.features.forEach((elem) => {
+            this.mapShowName(elem.name, elem.center[0], elem.center[1])
+            // 定一个省份3D对象
+            const province = new THREE.Object3D()
+            // 循环坐标数组
+            elem.geometry.coordinates.forEach((multiPolygon) => {
+                multiPolygon.forEach((polygon) => {
+                    const shape = new THREE.Shape()
+                    const lineGeometry = new THREE.BufferGeometry()
+                    const vector3Array = new Array()
+                    for (let i = 0, j = polygon.length; i < j; i++) {
+                        const [xVal, yVal] = projection(polygon[i])
+                        const x = xVal ? xVal : 0
+                        const y = yVal ? -yVal : 0
+                        if (i === 0) shape.moveTo(x, y)
+                        shape.lineTo(x, y)
+                        vector3Array.push(new THREE.Vector3(x, y, 4.01))
+                        // this.mapShowName(elem.name, x, y)
+                        // vector3Array.push(x, y, 4.01)
+                    }
+                    // const vertices = new Float32Array(vector3Array)
+                    // lineGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
+                    lineGeometry.setFromPoints(vector3Array)
+
+                    const geometry = new THREE.ExtrudeGeometry(shape, {
+                        depth: 10,
+                        bevelEnabled: false
+                    })
+
+                    const mesh = new THREE.Mesh(geometry, [material.clone(), material1.clone()])
+                    const line = new THREE.Line(lineGeometry, lineMaterial.clone())
+                    province.properties = elem.properties
+                    province.add(mesh)
+                    province.add(line)
+                    mapPackage.add(province)
+                })
+            })
+        })
+        this.mapPackage = mapPackage
+        this.scene.add(mapPackage)
+        this.camera.position.set(0, -20, 150)
+        this.setTools()
+        this.setRaycaster()
     }
 
-    //绘制线条
-    drawLine(points) {
-        const material = new THREE.LineBasicMaterial({
-            side: THREE.DoubleSide,
-            color: '#ccc',
-            transparent: true,
-            opacity: 0.8
-        })
-        const geometry = new THREE.BufferGeometry()
-        const pointsArray = new Array()
-        points.forEach((d) => {
-            const [x, y, z] = d
-            pointsArray.push(new THREE.Vector3(x, y, z))
-        })
+    setTools() {
+        if (!this.tooltip) {
+            const ele = document.createElement('div')
+            ele.setAttribute('id', 'tooltip')
+            ele.setAttribute(
+                'style',
+                `
+                position: absolute;
+                z-index: 2;
+                background: white;
+                padding: 10px;
+                border-radius: 2px;
+                visibility: hidden;
+                user-select: none;
+                `
+            )
+            document.querySelector('#app').appendChild(ele)
+            this.tooltip = ele
+        } else {
+            this.tooltip = document.querySelector('#tooltip')
+        }
+    }
 
-        geometry.setFromPoints(pointsArray)
-        const line = new THREE.Line(geometry, material)
-        return line
+    setRaycaster() {
+        this.raycaster = new THREE.Raycaster()
+        this.mouse = new THREE.Vector2()
+        this.webGLDOM.addEventListener('mousemove', this.mouseEvent.bind(this))
+        this.animationPlay('raycaster', () => {
+            // 通过摄像机和鼠标位置更新射线
+            this.raycaster.setFromCamera(this.mouse, this.camera)
+            // 算出射线 与当场景相交的对象有那些
+            // 算出射线 与当场景相交的对象有那些
+            const intersects = this.raycaster.intersectObjects(this.scene.children, true)
+            // 恢复上一次清空的
+            if (this.lastPick) {
+                this.lastPick.object.material[0].color.set('#2defff')
+                this.lastPick.object.material[1].color.set('#3480C4')
+            }
+            this.lastPick = null
+            this.lastPick = intersects.find((item) => item.object?.material?.length === 2)
+            this.tooltip.style.visibility = 'hidden'
+            if (this.lastPick) {
+                this.lastPick.object.material[0].color.set(0xff0000)
+                this.lastPick.object.material[1].color.set(0xff0000)
+                const properties = this.lastPick.object.parent.properties
+                if (properties.name) {
+                    this.tooltip.textContent = properties.name
+                    this.tooltip.style.visibility = 'visible'
+                }
+            }
+            this.initRender()
+        })
     }
 
     mouseEvent(event) {
-        if (!this.raycaster) this.raycaster = new THREE.Raycaster()
-        if (!this.mouse) this.mouse = new THREE.Vector2()
+        const { top, left, width, height } = this.webGLDOM.getBoundingClientRect()
+        const clientX = event.clientX - left
+        const clientY = event.clientY - top
 
+        this.mouse.x = (clientX / width) * 2 - 1
+        this.mouse.y = -(clientY / height) * 2 + 1
         // 将鼠标位置归一化为设备坐标。x 和 y 方向的取值范围是 (-1 to +1)
-        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1
-        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
-
-        // 通过摄像机和鼠标位置更新射线
-        this.raycaster.setFromCamera(this.mouse, this.camera)
-
-        // 计算物体和射线的焦点
-        const intersects = this.raycaster.intersectObjects(this.group.children)
-        this.group.children.forEach((mesh) => {
-            mesh.material.color.set('#005fc3')
-        })
-
-        for (let i = 0, j = intersects.length; i < j; i++) {
-            intersects[i].object.material.color.set(0xff0000)
-        }
+        // this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1
+        // this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
+        // 更改div位置
+        this.tooltip.style.left = clientX + 2 + 'px'
+        this.tooltip.style.top = clientY + 2 + 'px'
     }
 
     // 显示名称
     mapShowName(name, x, y) {
         //创建canvas对象用来绘制文字
-        let position = { x: 0, y: 0, z: 0 }
+        // let position = { x: 0, y: 0, z: 0 }
         let canvas = document.createElement('canvas')
         let ctx = canvas.getContext('2d')
         ctx.fillStyle = 'rgb(255,255,250)'
@@ -193,7 +191,6 @@ export default class threejsMap extends threejsWebGL {
         ctx.fillStyle = '#000000'
         ctx.fillText(name, 130, 55)
         ctx.globalAlpha = 1
-
         // 将画布生成的图片作为贴图给精灵使用，并将精灵创建在设定好的位置
         let texture = new THREE.Texture(canvas)
         texture.needsUpdate = true
@@ -207,10 +204,11 @@ export default class threejsMap extends threejsWebGL {
         })
         //创建坐标点，并将材质给坐标
         let geometry = new THREE.BufferGeometry()
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute([x, y, 0], 3))
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute([x, y, 0], 1))
         let sprite = new THREE.Points(geometry, spriteMaterial)
-        sprite.position.set(position.x, position.y, position.z)
+        sprite.position.set(x, -y + 2, 6)
         this.scene.add(sprite)
+        canvas.remove()
     }
 
     // 销毁

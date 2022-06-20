@@ -66,8 +66,7 @@ export default class threejsMap extends threejsWebGL {
         })
 
         mapData.features.forEach((elem) => {
-            const [eX, eY] = elem.properties.center || [0, 0]
-            this.mapShowName(elem.properties.name || '', eX ? eX : 0, eY ? eY : 0)
+            this.mapShowName(elem.properties.name, elem.properties.center)
             // 定一个省份3D对象
             const province = new THREE.Object3D()
             // 循环坐标数组
@@ -109,6 +108,78 @@ export default class threejsMap extends threejsWebGL {
         this.camera.position.set(0, -20, 150)
         this.setTools()
         this.setRaycaster()
+    }
+
+    initMap2(mapData) {
+        if (!mapData) return
+        const canvas = document.createElement('canvas')
+        canvas.setAttribute('id', 'name')
+        canvas.setAttribute(
+            'style',
+            `width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;`
+        )
+        document.querySelector('#app').appendChild(canvas)
+        this.mapData = mapData
+        const mapPackage = new THREE.Object3D()
+        // d3-geo转化坐标
+        const projection = d3geo.geoMercator().center([104.0, 37.5]).scale(80).translate([0, 0])
+        // 遍历省份构建模型
+        this.mapData.features.forEach((elem) => {
+            // 新建一个省份容器：用来存放省份对应的模型和轮廓线
+            const province = new THREE.Object3D()
+            const coordinates = elem.geometry.coordinates
+            coordinates.forEach((multiPolygon) => {
+                multiPolygon.forEach((polygon) => {
+                    // 这里的坐标要做2次使用：1次用来构建模型，1次用来构建轮廓线
+                    const shape = new THREE.Shape()
+                    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff })
+
+                    const lineGeometry = new THREE.BufferGeometry()
+                    const vector3Array = new Array()
+                    for (let i = 0, j = polygon.length; i < j; i++) {
+                        const [xVal, yVal] = projection(polygon[i])
+                        const x = xVal ? xVal : 0
+                        const y = yVal ? -yVal : 0
+                        if (i === 0) shape.moveTo(x, y)
+                        shape.lineTo(x, y)
+                        vector3Array.push(new THREE.Vector3(x, y, 4.01))
+                        // this.mapShowName(elem.name, x, y)
+                        // vector3Array.push(x, y, 4.01)
+                    }
+                    // const vertices = new Float32Array(vector3Array)
+                    // lineGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
+                    lineGeometry.setFromPoints(vector3Array)
+                    const extrudeSettings = {
+                        depth: 4,
+                        bevelEnabled: false
+                    }
+                    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings)
+                    const material = new THREE.MeshBasicMaterial({ color: '#d13a34', transparent: true, opacity: 0.6 })
+                    const mesh = new THREE.Mesh(geometry, material)
+                    const line = new THREE.Line(lineGeometry, lineMaterial)
+                    province.add(mesh)
+                    province.add(line)
+                })
+            })
+            // 将geojson的properties放到模型中，后面会用到
+            province.properties = elem.properties
+            if (elem.properties.centroid) {
+                const [x, y] = projection(elem.properties.centroid)
+                province.properties._centroid = [x, y]
+            }
+            mapPackage.add(province)
+        })
+        this.mapPackage = mapPackage
+        this.scene.add(mapPackage)
+
+        super.animationPlay('showName', () => {
+            this.showName()
+        })
     }
 
     setTools() {
@@ -165,6 +236,75 @@ export default class threejsMap extends threejsWebGL {
         })
     }
 
+    showName() {
+        const width = window.innerWidth
+        const height = window.innerHeight
+        let canvas = document.querySelector('#name')
+        if (!canvas) return
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        // 新建一个离屏canvas
+        const offCanvas = document.createElement('canvas')
+        offCanvas.width = width
+        offCanvas.height = height
+        const ctxOffCanvas = canvas.getContext('2d')
+        // 设置canvas字体样式
+        ctxOffCanvas.font = '16.5px Arial'
+        ctxOffCanvas.strokeStyle = '#FFFFFF'
+        ctxOffCanvas.fillStyle = '#000000'
+        // texts用来存储显示的名称，重叠的部分就不会放到里面
+        const texts = []
+        /**
+         * 遍历省份数据，有2个核心功能
+         * 1. 将3维坐标转化成2维坐标
+         * 2. 后面遍历到的数据，要和前面的数据做碰撞对比，重叠的就不绘制
+         * */
+        this.mapData.features.forEach((elem, index) => {
+            if (!elem.properties._centroid) return
+            // 找到中心点
+            const y = -elem.properties._centroid[1]
+            const x = elem.properties._centroid[0]
+            const z = 4
+            // 转化为二维坐标
+            const vector = new THREE.Vector3(x, y, z)
+            const position = vector.project(this.camera)
+            // 构建文本的基本属性：名称，left, top, width, height -> 碰撞对比需要这些坐标数据
+            const name = elem.properties.name
+            const left = ((vector.x + 1) / 2) * width
+            const top = (-(vector.y - 1) / 2) * height
+            const text = {
+                name,
+                left,
+                top,
+                width: ctxOffCanvas.measureText(name).width,
+                height: 16.5
+            }
+            // 碰撞对比
+            let show = true
+            for (let i = 0, j = texts.length; i < j; i++) {
+                if (
+                    text.left + text.width < texts[i].left ||
+                    text.top + text.height < texts[i].top ||
+                    texts[i].left + texts[i].width < text.left ||
+                    texts[i].top + texts[i].height < text.top
+                ) {
+                    show = true
+                } else {
+                    show = false
+                    break
+                }
+            }
+            if (show) {
+                texts.push(text)
+                ctxOffCanvas.strokeText(name, left, top)
+                ctxOffCanvas.fillText(name, left, top)
+            }
+        })
+        // 离屏canvas绘制到canvas中
+        ctx.drawImage(offCanvas, 0, 0)
+    }
+
     mouseEvent(event) {
         const { top, left, width, height } = this.webGLDOM.getBoundingClientRect()
         const clientX = event.clientX - left
@@ -181,17 +321,20 @@ export default class threejsMap extends threejsWebGL {
     }
 
     // 显示名称
-    mapShowName(name, x, y) {
+    mapShowName(name, center) {
+        if (!center) return
+        const x = center[0]
+        const y = -center[1]
+        const z = 10.6
         //创建canvas对象用来绘制文字
-        // let position = { x: 0, y: 0, z: 0 }
         let canvas = document.createElement('canvas')
         let ctx = canvas.getContext('2d')
         ctx.fillStyle = 'rgb(255,255,250)'
         ctx.font = 'bolder 36px Arial '
         ctx.strokeStyle = '#FFFFFF'
         ctx.fillStyle = '#000000'
-        ctx.fillText(name, 130, 55)
-        ctx.globalAlpha = 1
+        ctx.fillText(name, 20, 55)
+        // ctx.globalAlpha = 1
         // 将画布生成的图片作为贴图给精灵使用，并将精灵创建在设定好的位置
         let texture = new THREE.Texture(canvas)
         texture.needsUpdate = true
@@ -205,11 +348,11 @@ export default class threejsMap extends threejsWebGL {
         })
         //创建坐标点，并将材质给坐标
         let geometry = new THREE.BufferGeometry()
-        geometry.setFromPoints([new THREE.Vector2(x, y, 4.01)])
+        geometry.setFromPoints([new THREE.Vector2(x, y, z)])
         let sprite = new THREE.Points(geometry, spriteMaterial)
-        sprite.position.set(x, -y + 2, 6)
-        sprite.translateX(-190)
-        sprite.translateY(30)
+        sprite.position.set(x - 200, y + 50, z)
+        // sprite.translateX(-190)
+        // sprite.translateY(30)
         this.scene.add(sprite)
         canvas.remove()
     }

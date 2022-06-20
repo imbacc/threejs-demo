@@ -5,39 +5,34 @@ import threejsWebGL from './threejsWebGL.js'
 import pic1 from '@/assets/img/lightray.jpg'
 import pic2 from '@/assets/img/lightray_yellow.jpg'
 
-export default class threejsLightBar extends threejsWebGL {
-    constructor() {
-        super()
-        this.scene = super.getValue('scene')
-        this.camera = super.getValue('camera')
-        this.webGL = super.getValue('webGL')
-        this.webGLDOM = super.getValue('webGLDOM')
-        this.vector3Json = []
+export default class threejsLightBar {
+    constructor(map) {
+        this.map = map
+        this.mapData = []
+        this.lightBarList = []
         this.projection = null
         this.textures = [new THREE.TextureLoader().load(pic1), new THREE.TextureLoader().load(pic2)]
         this.colors = ['#fff', '#ffeb3b']
     }
 
-    setVector3Json(data) {
-        this.vector3Json = data
+    setMapData(data) {
+        this.mapData = Array.isArray(data) ? data : data?.features || []
+        console.log('%c [ this.mapData ]-24', 'font-size:14px; background:#41b883; color:#ffffff;', this.mapData)
     }
 
-    drawLightBar(data) {
+    initDrawLightBar(data) {
+        this.lightBarList = data
         const group = new THREE.Group()
-        const texture = new THREE.TextureLoader().load(pic1)
-        //texture.rotation.x = Math.PI;
         for (let i = 0, j = data.length; i < j; i++) {
-            const d = data[i]
-            const name = d.name.replace('市', '')
-            const findIndex = this.vector3Json.findIndex((f) => ~f.name.indexOf(name))
-            const find = this.vector3Json[findIndex]
-            const cp = find?.cp || find?.center || null
+            const { name, value } = data[i]
+            const findIndex = this.mapData.findIndex((f) => ~f.properties.name.indexOf(name))
+            const find = this.mapData[findIndex]?.properties
+            const cp = find?.center || null
             if (!cp) continue
             const [x, y, z] = this.lnglatToVector(cp)
-            this.vector3Json[findIndex].vector3 = [x, y, z]
-            const geometry = new THREE.PlaneGeometry(1, d.value / 5)
+            this.lightBarList[i].vector3 = [x, y, z]
+            const geometry = new THREE.PlaneGeometry(1, value / 5)
             const material = new THREE.MeshBasicMaterial({
-                //map: texture,
                 map: this.textures[i % 2], ////颜色贴图
                 color: '#ffff00',
                 transparent: true,
@@ -47,7 +42,7 @@ export default class threejsLightBar extends threejsWebGL {
                 side: THREE.DoubleSide
             })
             const plane = new THREE.Mesh(geometry, material)
-            plane.position.set(x, y, -(z + d.value / 5 / 2))
+            plane.position.set(x, y, -(z + value / 5 / 2))
             plane.rotation.x = Math.PI / 2
             group.add(plane)
             const plane2 = plane.clone()
@@ -56,7 +51,7 @@ export default class threejsLightBar extends threejsWebGL {
             group.add(this.addButtomPlate([x, y, z], i))
         }
         group.rotation.y = Math.PI
-        this.scene.add(group)
+        this.map.scene.add(group)
     }
 
     //经纬度转三维坐标
@@ -87,19 +82,16 @@ export default class threejsLightBar extends threejsWebGL {
         return circle
     }
 
-    drawFlyLine(data) {
+    initDrawFlyLine(data) {
         const group = new THREE.Group()
         data.forEach((d) => {
             const { source, target } = d
-            const sourceName = source.name.replace('市', '')
-            const targetName = target.name.replace('市', '')
-            const sourceFind = this.vector3Json.find((f) => ~f.name.indexOf(sourceName))
-            const targetFind = this.vector3Json.find((f) => ~f.name.indexOf(targetName))
-            const [x0, y0, z0] = sourceFind?.vector3 || sourceFind?.center || []
-            console.log('%c [ z0 ]-94', 'font-size:14px; background:#41b883; color:#ffffff;', z0)
-            console.log('%c [ y0 ]-94', 'font-size:14px; background:#41b883; color:#ffffff;', y0)
-            console.log('%c [ x0 ]-94', 'font-size:14px; background:#41b883; color:#ffffff;', x0)
-            const [x1, y1, z1] = targetFind?.vector3 || targetFind?.center || []
+            const sourceName = source.name
+            const targetName = target.name
+            const sourceFind = this.lightBarList.find((f) => ~f.name.indexOf(sourceName))
+            const targetFind = this.lightBarList.find((f) => ~f.name.indexOf(targetName))
+            const [x0, y0, z0] = sourceFind?.vector3 || [...sourceFind?.center, 0]
+            const [x1, y1, z1] = targetFind?.vector3 || [...targetFind?.center, 0]
 
             const curve = new THREE.QuadraticBezierCurve3(
                 new THREE.Vector3(x0, y0, z0),
@@ -110,19 +102,20 @@ export default class threejsLightBar extends threejsWebGL {
             const points = curve.getPoints(10)
             const geometry = new THREE.BufferGeometry()
 
-            // geometry.setFromPoints(...points)
-            geometry.vertices = points
+            geometry.setFromPoints(points)
+            // geometry.vertices = points
             const material = new THREE.LineBasicMaterial({
-                color: THREE.vertexColors
-                // color: '#ff0000',
-                // transparent: true,
-                // opacity: 0.6,
-                // side: THREE.DoubleSide
+                // color: THREE.vertexColors,
+                color: '#ff0000',
+                transparent: true,
+                linewidth: 10,
+                opacity: 1,
+                side: THREE.DoubleSide
             })
             const line = new THREE.Line(geometry, material)
             group.add(line)
         })
         group.rotation.y = Math.PI
-        this.scene.add(group)
+        this.map.scene.add(group)
     }
 }

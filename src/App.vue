@@ -3,7 +3,7 @@
     const compList = import.meta.glob('./components/**/*.vue')
     console.log('%c [ compList ]-7', 'font-size:14px; background:#41b883; color:#ffffff;', compList)
 
-    const first = 'demo8'
+    const first = 'demo5'
     const demoResolve = shallowRef({})
     const comp = shallowRef(null)
 

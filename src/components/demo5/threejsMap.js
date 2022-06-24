@@ -26,7 +26,7 @@ export default class threejsMap extends threejsWebGL {
         // set webGL
         this.webGL.setPixelRatio(window.devicePixelRatio)
         // // set scene
-        this.scene.background = new THREE.Color(0xf0f0f0)
+        this.scene.background = new THREE.Color('#192741')
         // // set controls
         // this.controls.enableZoom = true
         // this.controls.autoRotate = false
@@ -66,7 +66,7 @@ export default class threejsMap extends threejsWebGL {
         })
 
         mapData.features.forEach((elem) => {
-            this.mapShowName(elem.properties.name, elem.properties.center)
+            // this.mapShowName(elem.properties.name, elem.properties.center)
             // 定一个省份3D对象
             const province = new THREE.Object3D()
             // 循环坐标数组

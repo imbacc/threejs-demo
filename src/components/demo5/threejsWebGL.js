@@ -40,6 +40,11 @@ export default class threejsWebGL {
         this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000)
         this.camera.position.set(100, 300, 300)
         this.camera.lookAt(0, 0, 0)
+        setTimeout(() => {
+            this.animationPlay('fov', () => {
+                this.camera.fov = 150
+            })
+        }, 1000)
     }
 
     // 初始化场景

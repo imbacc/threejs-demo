@@ -3,7 +3,7 @@
     const compList = import.meta.glob('./components/**/*.vue')
     console.log('%c [ compList ]-7', 'font-size:14px; background:#41b883; color:#ffffff;', compList)
 
-    const first = 'demo5'
+    const first = 'demo8'
     const demoResolve = shallowRef({})
     const comp = shallowRef(null)
 
@@ -31,6 +31,9 @@
             a.style.marginRight = '30px'
             a.innerText = `切换demo${i}`
             a.addEventListener('click', () => {
+                document.querySelectorAll('canvas').forEach((canvas) => {
+                    canvas.remove()
+                })
                 let name = keys[i].replace('./components/', '').replace('/index.vue', '')
                 comp.value = demoResolve[name]
             })

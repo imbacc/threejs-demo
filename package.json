@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tweenjs/tween.js": "18",
     "d3-geo": "^3.0.1",
     "three": "^0.141.0",
     "three-css2drender": "^1.0.0",

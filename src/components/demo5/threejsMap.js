@@ -3,12 +3,14 @@ import * as d3geo from 'd3-geo'
 import threejsWebGL from './threejsWebGL.js'
 import { CSM } from 'three/examples/jsm/csm/CSM.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import TWEEN from '@tweenjs/tween.js'
 
 export default class threejsMap extends threejsWebGL {
     constructor(scene, camera, webGL, webGLDOM) {
         super()
         this.scene = this.getValue('scene')
         this.camera = this.getValue('camera')
+        this.controls = this.getValue('controls')
         this.webGL = this.getValue('webGL')
         this.webGLDOM = this.getValue('webGLDOM')
         // data
@@ -32,14 +34,47 @@ export default class threejsMap extends threejsWebGL {
         // this.controls.autoRotate = false
         // this.controls.autoRotateSpeed = 2
         // this.controls.enablePan = true
+        // crame
+        this.camera.position.set(0, -20, 150)
         // Object 3D
         // this.mapObject = new THREE.Object3D()
         // set light
-        let directionalLight = new THREE.DirectionalLight(0xffffff, 1.1)
-        directionalLight.position.set(300, 1000, 500)
-        directionalLight.target.position.set(0, 0, 0)
-        directionalLight.castShadow = true
-        this.scene.add(directionalLight)
+        // let directionalLight = new THREE.DirectionalLight(0xffffff, 1.1)
+        // directionalLight.position.set(300, 1000, 500)
+        // directionalLight.target.position.set(0, 0, 0)
+        // directionalLight.castShadow = true
+        // this.scene.add(directionalLight)
+
+        const addBox = (i) => {
+            const box = new THREE.BoxGeometry(2.2, 2.2, 2.2)
+            const material = new THREE.MeshNormalMaterial()
+            const mesh = new THREE.Mesh(box, material)
+            mesh.translateX(i * 10)
+            // 然后添加到场景
+            this.scene.add(mesh)
+            this.animationPlay('box', () => {
+                mesh.rotation.x += 0.01
+                mesh.rotation.y += 0.01
+                mesh.castShadow = true
+                this.initRender()
+            })
+        }
+
+        for (let i = 0; i < 3; i++) {
+            addBox(i)
+        }
+
+        let material = new THREE.MeshPhongMaterial({ color: 0x808080, dithering: true })
+
+        let geometry = new THREE.PlaneGeometry(2000, 2000)
+
+        let mesh2 = new THREE.Mesh(geometry, material)
+        mesh2.position.set(0, -3, 0)
+        mesh2.rotation.x = -Math.PI * 0.5
+        mesh2.receiveShadow = true
+        this.scene.add(mesh2)
+
+        super.onControlsChange()
     }
 
     initMap(mapData) {
@@ -105,9 +140,32 @@ export default class threejsMap extends threejsWebGL {
         })
         this.mapPackage = mapPackage
         this.scene.add(mapPackage)
-        this.camera.position.set(0, -20, 150)
         this.setTools()
         this.setRaycaster()
+
+        // setTimeout(() => {
+        //     new tween.Tween([100, 300, 300])
+        //         .to([900, 900, 900], 1000 * 1)
+        //         .easing(tween.Easing[100])
+        //         .onUpdate(() => {
+        //             camera.position.set([300, 600, 600])
+        //             camera.lookAt(0, 0, 0)
+        //         })
+        //         .start()
+
+        //     this.animationPlay('tween', () => {
+        //         tween.update()
+        //     })
+        // })
+
+        setTimeout(() => {
+            var position = { x: 0, y: 300 }
+            var target = { x: 400, y: 50 }
+            const tween = new TWEEN.Tween(position).to(target, 2000).easing(TWEEN.Easing.Linear.None).start()
+            this.animationPlay('tween', () => {
+                tween.update()
+            })
+        }, 2300)
     }
 
     initMap2(mapData) {
@@ -116,12 +174,14 @@ export default class threejsMap extends threejsWebGL {
         canvas.setAttribute('id', 'name')
         canvas.setAttribute(
             'style',
-            `width: 100%;
-        height: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-        pointer-events: none;`
+            `
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            `
         )
         document.querySelector('#app').appendChild(canvas)
         this.mapData = mapData
@@ -177,9 +237,10 @@ export default class threejsMap extends threejsWebGL {
         this.mapPackage = mapPackage
         this.scene.add(mapPackage)
 
-        super.animationPlay('showName', () => {
-            this.showName()
-        })
+        // this.showName()
+        // super.animationPlay('showName', () => {
+        //     this.showName()
+        // })
     }
 
     setTools() {

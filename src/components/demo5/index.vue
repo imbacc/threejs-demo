@@ -38,16 +38,16 @@
     ]
 
     const map = new threejsMap()
-    const point = new threejsLightBar(map)
+    // const point = new threejsLightBar(map)
 
     fetch('china.json')
         .then((res) => res.json())
         .then((res) => {
             console.log('%c [ res ]-11', 'font-size:14px; background:#41b883; color:#ffffff;', res)
-            map.initMap(res)
-            point.setMapData(res)
-            point.initDrawLightBar(lightBarData)
-            point.initDrawFlyLine(flyDatas)
+            // map.initMap(res)
+            // point.setMapData(res)
+            // point.initDrawLightBar(lightBarData)
+            // point.initDrawFlyLine(flyDatas)
         })
 </script>
 
